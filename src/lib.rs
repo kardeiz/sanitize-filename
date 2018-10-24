@@ -47,8 +47,13 @@ pub fn sanitize_with_options<S: AsRef<str>>(name: S, options: Options) -> String
     let name = RESERVED_RE.replace(&name, replacement);
     
     let collect = |name: ::std::borrow::Cow<str>| {
-        if truncate {
-            name.chars().take(255).collect()
+        if truncate && name.len() > 255 {
+            let mut end = 255;
+            loop {
+                if name.is_char_boundary(end) { break; }
+                end -= 1;
+            }
+            String::from(&name[..end])
         } else {
             String::from(name)
         }

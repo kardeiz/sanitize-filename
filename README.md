@@ -17,7 +17,7 @@ You can also configure a few basic options:
 
 ```rust
 let options = sanitize_filename::Options {
-    truncate: true, // true by default, truncates to 255 characters
+    truncate: true, // true by default, truncates to 255 bytes
     windows: true, // default value depends on the OS, removes reserved names like `con` from start of strings on Windows
     replacement: "" // str to replace sanitized chars/strings
 };
@@ -38,5 +38,5 @@ Pass a file name to clean to the program (also reads STDIN)
 FLAGS:
     -r, --replace <r>          Replacement characters
     --windows, --no-windows    Whether to handle filenames for Windows
-    --truncate, --no-truncate  Whether to truncate file names to 255 characters
+    --truncate, --no-truncate  Whether to truncate file names to 255 bytes
 ```
