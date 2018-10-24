@@ -1,0 +1,13 @@
+[package]
+authors = ["Jacob Brown <kardeiz@gmail.com>"]
+name = "sanitize-filename"
+version = "0.1.0"
+keywords = ["filename", "sanitizer"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/kardeiz/sanitize-filename"
+description = "A simple filename sanitizer, based on Node's sanitize-filename"
+
+[dependencies]
+lazy_static = "1.1.0"
+regex = "1.0.5"
