@@ -8,7 +8,7 @@ fn main() -> Result<(), ::std::io::Error> {
     let mut truncate = None;
     let mut windows = None;
 
-    for arg in ::std::env::args() {
+    for arg in ::std::env::args().skip(1) {
         if set_replacement {
             replacement = Some(arg);
             set_replacement = false;
