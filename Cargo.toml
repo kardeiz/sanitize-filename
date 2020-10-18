@@ -1,7 +1,7 @@
 [package]
 authors = ["Jacob Brown <kardeiz@gmail.com>"]
 name = "sanitize-filename"
-version = "0.2.1"
+version = "0.3.0"
 keywords = ["filename", "sanitizer"]
 license = "MIT"
 readme = "README.md"
@@ -9,5 +9,5 @@ repository = "https://github.com/kardeiz/sanitize-filename"
 description = "A simple filename sanitizer, based on Node's sanitize-filename"
 
 [dependencies]
-lazy_static = "1.1.0"
-regex = { version = "1.4.1", default-features = false, features = ["std", "unicode-case"] }
+lazy_static = "1"
+regex = { version = "1", default-features = false, features = ["std", "unicode-case"] }
