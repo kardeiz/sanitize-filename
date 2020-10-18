@@ -26,7 +26,7 @@ checksum = "8cab7a364d15cde1e505267766a2d3c4e22a843e1a601f0fa7564c0f82ced11c"
 
 [[package]]
 name = "sanitize-filename"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "lazy_static",
  "regex",
