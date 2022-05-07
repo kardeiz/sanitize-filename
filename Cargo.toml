@@ -1,7 +1,7 @@
 [package]
 authors = ["Jacob Brown <kardeiz@gmail.com>"]
 name = "sanitize-filename"
-version = "0.3.0"
+version = "0.4.0"
 keywords = ["filename", "sanitizer"]
 license = "MIT"
 readme = "README.md"
