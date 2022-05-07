@@ -69,6 +69,55 @@ pub fn sanitize_with_options<S: AsRef<str>>(name: S, options: Options) -> String
     
 }
 
+#[derive(Clone)]
+pub struct OptionsForCheck {
+    pub windows: bool,
+    pub truncate: bool,
+}
+
+impl Default for OptionsForCheck {
+    fn default() -> Self {
+        OptionsForCheck {
+            windows: cfg!(windows),
+            truncate: true,
+        }
+    }
+}
+
+pub fn is_sanitized<S: AsRef<str>>(name: S) -> bool {
+    is_sanitized_with_options(name, OptionsForCheck::default())
+}
+
+pub fn is_sanitized_with_options<S: AsRef<str>>(name: S, options: OptionsForCheck) -> bool {
+
+    let OptionsForCheck { windows, truncate } = options;
+    let name = name.as_ref();
+    
+    if ILLEGAL_RE.is_match(&name) {
+        return false;
+    }
+    if CONTROL_RE.is_match(&name) {
+        return false;
+    }
+    if RESERVED_RE.is_match(&name) {
+        return false;
+    }
+    if truncate && name.len() > 255 {
+        return false;
+    }
+    if windows {
+        if WINDOWS_RESERVED_RE.is_match(&name) {
+            return false;
+        }
+        if WINDOWS_TRAILING_RE.is_match(&name) {
+            return false;
+        }
+    }
+
+    return true;
+
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -164,9 +213,54 @@ mod tests {
         ""
     ];
 
+    static NAMES_IS_SANITIZED: &'static [bool] = &[
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+    ];
+
     #[test]
     fn it_works() {
-
+        // sanitize
         let options = super::Options {
             windows: true,
             truncate: true,
@@ -181,5 +275,17 @@ mod tests {
         let shorter = ::std::iter::repeat('a').take(255).collect::<String>();
         assert_eq!(super::sanitize_with_options(long, options.clone()), shorter);
 
+        // is_sanitized
+        let options = super::OptionsForCheck {
+            windows: true,
+            truncate: true,
+        };
+
+        for (idx, name) in NAMES.iter().enumerate() {
+            assert_eq!(super::is_sanitized_with_options(name, options.clone()), NAMES_IS_SANITIZED[idx]);
+        }
+
+        let long = ::std::iter::repeat('a').take(300).collect::<String>();
+        assert_eq!(super::is_sanitized_with_options(long, options.clone()), false);
     }
 }
