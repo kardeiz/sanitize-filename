@@ -13,7 +13,7 @@ lazy_static! {
         .case_insensitive(true)
         .build()
         .unwrap();
-    static ref WINDOWS_TRAILING_RE: Regex = Regex::new(r#"^\.+$"#).unwrap();
+    static ref WINDOWS_TRAILING_RE: Regex = Regex::new(r#"[\. ]+$"#).unwrap();
 }
 
 #[derive(Clone)]
@@ -165,7 +165,8 @@ mod tests {
         "../../foobar",
         "./././foobar",
         "|*.what",
-        "LPT9.asdf"
+        "LPT9.asdf",
+        "foobar..."
     ];
 
     static NAMES_CLEANED: &'static [&'static str] = &[
@@ -187,9 +188,9 @@ mod tests {
         "plus+.js",
         "'five and sixseven'.js",
         " space at front",
-        "space at end ",
+        "space at end",
         ".period",
-        "period.",
+        "period",
         "relativepathtosomedir",
         "abspathtosomedir",
         "~.notsshauthorized_keys",
@@ -210,7 +211,8 @@ mod tests {
         "....foobar",
         "...foobar",
         ".what",
-        ""
+        "",
+        "foobar"
     ];
 
     static NAMES_IS_SANITIZED: &'static [bool] = &[
@@ -232,13 +234,14 @@ mod tests {
         true,
         false,
         true,
-        true,
-        true,
+        false,
         true,
         false,
         false,
         false,
+        false,
         true,
+        false,
         false,
         false,
         false,
