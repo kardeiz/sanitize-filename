@@ -1,38 +1,19 @@
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
 extern crate regex;
 use regex::{Regex, RegexBuilder};
 
-static ILLEGAL_RE: OnceLock<Regex> = OnceLock::new();
-static CONTROL_RE: OnceLock<Regex> = OnceLock::new();
-static RESERVED_RE: OnceLock<Regex> = OnceLock::new();
-static WINDOWS_RESERVED_RE: OnceLock<Regex> = OnceLock::new();
-static WINDOWS_TRAILING_RE: OnceLock<Regex> = OnceLock::new();
-
-fn illegal_re() -> &'static Regex {
-    ILLEGAL_RE.get_or_init(|| Regex::new(r#"[/\?<>\\:\*\|":]"#).unwrap())
-}
-
-fn control_re() -> &'static Regex {
-    CONTROL_RE.get_or_init(|| Regex::new(r#"[\x00-\x1f\x80-\x9f]"#).unwrap())
-}
-
-fn reserved_re() -> &'static Regex {
-    RESERVED_RE.get_or_init(|| Regex::new(r#"^\.+$"#).unwrap())
-}
-
-fn windows_reserved_re() -> &'static Regex {
-    WINDOWS_RESERVED_RE.get_or_init(|| {
-        RegexBuilder::new(r#"(?i)^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$"#)
-            .case_insensitive(true)
-            .build()
-            .unwrap()
-    })
-}
-
-fn windows_trailing_re() -> &'static Regex {
-    WINDOWS_TRAILING_RE.get_or_init(|| Regex::new(r#"[\. ]+$"#).unwrap())
-}
+static ILLEGAL_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"[/\?<>\\:\*\|":]"#).unwrap());
+static CONTROL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"[\x00-\x1f\x80-\x9f]"#).unwrap());
+static RESERVED_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"^\.+$"#).unwrap());
+static WINDOWS_RESERVED_RE: LazyLock<Regex> = LazyLock::new(|| {
+    RegexBuilder::new(r#"(?i)^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$"#)
+        .case_insensitive(true)
+        .build()
+        .unwrap()
+});
+static WINDOWS_TRAILING_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"[\. ]+$"#).unwrap());
 
 #[derive(Clone)]
 pub struct Options<'a> {
@@ -55,25 +36,24 @@ pub fn sanitize<S: AsRef<str>>(name: S) -> String {
     sanitize_with_options(name, Options::default())
 }
 
-pub fn sanitize_with_options<S: AsRef<str>>(name: S, options: Options) -> String {
-    let Options {
+pub fn sanitize_with_options<S: AsRef<str>>(
+    name: S,
+    Options {
         windows,
         truncate,
         replacement,
-    } = options;
+    }: Options,
+) -> String {
     let name = name.as_ref();
 
-    let name = illegal_re().replace_all(&name, replacement);
-    let name = control_re().replace_all(&name, replacement);
-    let name = reserved_re().replace(&name, replacement);
+    let name = ILLEGAL_RE.replace_all(&name, replacement);
+    let name = CONTROL_RE.replace_all(&name, replacement);
+    let name = RESERVED_RE.replace(&name, replacement);
 
     let collect = |name: ::std::borrow::Cow<str>| {
         if truncate && name.len() > 255 {
             let mut end = 255;
-            loop {
-                if name.is_char_boundary(end) {
-                    break;
-                }
+            while !name.is_char_boundary(end) {
                 end -= 1;
             }
             String::from(&name[..end])
@@ -83,8 +63,9 @@ pub fn sanitize_with_options<S: AsRef<str>>(name: S, options: Options) -> String
     };
 
     if windows {
-        let name = windows_reserved_re().replace(&name, replacement);
-        let name = windows_trailing_re().replace(&name, replacement);
+        let name = WINDOWS_RESERVED_RE.replace(&name, replacement);
+        let name = WINDOWS_TRAILING_RE.replace(&name, replacement);
+
         collect(name)
     } else {
         collect(name)
@@ -110,27 +91,29 @@ pub fn is_sanitized<S: AsRef<str>>(name: S) -> bool {
     is_sanitized_with_options(name, OptionsForCheck::default())
 }
 
-pub fn is_sanitized_with_options<S: AsRef<str>>(name: S, options: OptionsForCheck) -> bool {
-    let OptionsForCheck { windows, truncate } = options;
+pub fn is_sanitized_with_options<S: AsRef<str>>(
+    name: S,
+    OptionsForCheck { windows, truncate }: OptionsForCheck,
+) -> bool {
     let name = name.as_ref();
 
-    if illegal_re().is_match(&name) {
-        return false;
-    }
-    if control_re().is_match(&name) {
-        return false;
-    }
-    if reserved_re().is_match(&name) {
-        return false;
-    }
     if truncate && name.len() > 255 {
         return false;
     }
+    if ILLEGAL_RE.is_match(&name) {
+        return false;
+    }
+    if CONTROL_RE.is_match(&name) {
+        return false;
+    }
+    if RESERVED_RE.is_match(&name) {
+        return false;
+    }
     if windows {
-        if windows_reserved_re().is_match(&name) {
+        if WINDOWS_RESERVED_RE.is_match(&name) {
             return false;
         }
-        if windows_trailing_re().is_match(&name) {
+        if WINDOWS_TRAILING_RE.is_match(&name) {
             return false;
         }
     }
