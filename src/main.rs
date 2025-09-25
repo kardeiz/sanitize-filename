@@ -1,7 +1,6 @@
 extern crate sanitize_filename;
 
 fn main() -> Result<(), ::std::io::Error> {
-    
     let mut input = None;
     let mut set_replacement = false;
     let mut replacement = None;
@@ -12,7 +11,7 @@ fn main() -> Result<(), ::std::io::Error> {
         if set_replacement {
             replacement = Some(arg);
             set_replacement = false;
-        } else if arg == "-r" || arg == "--replace" { 
+        } else if arg == "-r" || arg == "--replace" {
             set_replacement = true;
         } else if arg == "--truncate" {
             truncate = Some(true);
@@ -39,7 +38,7 @@ fn main() -> Result<(), ::std::io::Error> {
 
     let mut options = sanitize_filename::Options::default();
 
-    if let Some(ref replacement) = replacement { 
+    if let Some(ref replacement) = replacement {
         options.replacement = replacement;
     }
 
@@ -51,10 +50,9 @@ fn main() -> Result<(), ::std::io::Error> {
         options.truncate = truncate;
     }
 
-    let output = sanitize_filename::sanitize_with_options(input, options);
+    let output = sanitize_filename::sanitize_with_options(&input, options);
 
     println!("{}", &output);
 
     Ok(())
-
 }
