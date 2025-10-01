@@ -9,9 +9,3 @@ edition = "2021"
 rust-version = "1.70.0"
 repository = "https://github.com/kardeiz/sanitize-filename"
 description = "A simple filename sanitizer, based on Node's sanitize-filename"
-
-[dependencies]
-regex = { version = "1.11", default-features = false, features = [
-    "std",
-    "unicode-case",
-] }
