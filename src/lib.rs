@@ -3,6 +3,8 @@ use std::borrow::Cow;
 const WINDOWS_RESERVED: &[&str] = &[
     "con", "prn", "aux", "nul", "com0", "com1", "com2", "com3", "com4", "com5", "com6", "com7",
     "com8", "com9", "lpt0", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+    // Windows also reserves ISO-8859-1 superscript digits 1, 2, and 3.
+    "com¹", "com²", "com³", "lpt¹", "lpt²", "lpt³",
 ];
 
 fn is_illegal_char(ch: char) -> bool {
@@ -355,5 +357,97 @@ mod tests {
 
         let long = std::iter::repeat('a').take(300).collect::<String>();
         assert_eq!(is_sanitized_with_options(long, options.clone()), false);
+    }
+    #[test]
+    fn sanitizes_windows_superscript_device_names() {
+        for name in ["COM¹", "COM²", "COM³", "LPT¹", "LPT²", "LPT³"] {
+            for base in [name.to_owned(), name.to_ascii_lowercase()] {
+                for extension in ["", ".txt", ".tar.gz"] {
+                    let filename = format!("{base}{extension}");
+                    for replacement in ["", "_"] {
+                        let options = Options {
+                            windows: true,
+                            replacement,
+                            ..Options::default()
+                        };
+                        assert_eq!(
+                            sanitize_with_options(filename.as_str(), options),
+                            replacement,
+                            "reserved filename {filename:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_windows_superscript_device_names_as_sanitized() {
+        let options = OptionsForCheck {
+            windows: true,
+            ..OptionsForCheck::default()
+        };
+        for name in ["COM¹", "COM²", "COM³", "LPT¹", "LPT²", "LPT³"] {
+            for base in [name.to_owned(), name.to_ascii_lowercase()] {
+                for extension in ["", ".txt", ".tar.gz"] {
+                    let filename = format!("{base}{extension}");
+                    assert!(
+                        !is_sanitized_with_options(&filename, options.clone()),
+                        "reserved filename {filename:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn preserves_non_device_superscript_names_and_non_windows_names() {
+        for name in [
+            "COM⁴",
+            "LPT⁵",
+            "myCOM¹",
+            "COM¹x",
+            "COM¹²",
+            "LPT³report",
+            "COM10",
+            "LPT10",
+        ] {
+            assert_eq!(
+                sanitize_with_options(
+                    name,
+                    Options {
+                        windows: true,
+                        ..Options::default()
+                    }
+                ),
+                name
+            );
+            assert!(is_sanitized_with_options(
+                name,
+                OptionsForCheck {
+                    windows: true,
+                    ..OptionsForCheck::default()
+                }
+            ));
+        }
+        for name in ["COM¹", "COM².txt", "COM³", "LPT¹", "LPT²", "LPT³.tar.gz"] {
+            assert_eq!(
+                sanitize_with_options(
+                    name,
+                    Options {
+                        windows: false,
+                        ..Options::default()
+                    }
+                ),
+                name
+            );
+            assert!(is_sanitized_with_options(
+                name,
+                OptionsForCheck {
+                    windows: false,
+                    ..OptionsForCheck::default()
+                }
+            ));
+        }
     }
 }
